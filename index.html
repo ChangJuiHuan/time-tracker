@@ -1,0 +1,811 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#111827" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="時間紀錄" />
+  <link rel="apple-touch-icon" href="icon-180.png" />
+  <link rel="manifest" href="manifest.json" />
+  <title>24 小時時間紀錄</title>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --text: #111827;
+      --subtext: #6b7280;
+      --border: #e5e7eb;
+      --primary: #111827;
+      --primary-text: #ffffff;
+      --danger: #dc2626;
+      --shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+      --radius: 22px;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Noto Sans TC", "PingFang TC", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: max(16px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+    }
+
+    .app {
+      width: min(760px, 100%);
+      margin: 0 auto;
+    }
+
+    header {
+      margin: 14px 0 18px;
+    }
+
+    h1 {
+      font-size: 28px;
+      line-height: 1.2;
+      margin: 0 0 6px;
+      letter-spacing: -0.03em;
+    }
+
+    .subtitle {
+      color: var(--subtext);
+      margin: 0;
+      font-size: 14px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+
+    .current {
+      text-align: center;
+      padding: 22px 18px;
+    }
+
+    .label {
+      color: var(--subtext);
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    .current-activity {
+      font-size: 38px;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      margin: 0;
+    }
+
+    .timer {
+      font-size: 28px;
+      font-weight: 700;
+      margin: 12px 0 4px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .start-time {
+      color: var(--subtext);
+      font-size: 14px;
+      min-height: 20px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      margin: 0 0 12px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .activity-button {
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      border-radius: 18px;
+      padding: 14px 10px;
+      min-height: 108px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font: inherit;
+      cursor: pointer;
+      box-shadow: 0 3px 10px rgba(15, 23, 42, 0.04);
+    }
+
+    .activity-button.active {
+      border: 3px solid var(--primary);
+      padding: 12px 8px;
+    }
+
+    .emoji {
+      font-size: 34px;
+      line-height: 1;
+      margin-bottom: 7px;
+    }
+
+    .activity-name {
+      font-weight: 700;
+      font-size: 17px;
+      margin-bottom: 4px;
+    }
+
+    .activity-time {
+      color: var(--subtext);
+      font-size: 13px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    button {
+      border: none;
+      border-radius: 14px;
+      padding: 13px 14px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .primary {
+      background: var(--primary);
+      color: var(--primary-text);
+      flex: 1;
+    }
+
+    .secondary {
+      background: #eef0f4;
+      color: var(--text);
+      flex: 1;
+    }
+
+    .danger {
+      background: #fee2e2;
+      color: var(--danger);
+      flex: 1;
+    }
+
+    .summary-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .summary-row:last-child {
+      border-bottom: none;
+    }
+
+    .summary-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+    }
+
+    .summary-time {
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .muted {
+      color: var(--subtext);
+    }
+
+    .records {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .record {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 12px;
+      background: #fff;
+    }
+
+    .record-main {
+      min-width: 0;
+    }
+
+    .record-title {
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .record-time {
+      color: var(--subtext);
+      font-size: 13px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .record-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .small-btn {
+      padding: 8px 10px;
+      border-radius: 12px;
+      font-size: 13px;
+      background: #eef0f4;
+    }
+
+    .small-danger {
+      background: #fee2e2;
+      color: var(--danger);
+    }
+
+    dialog {
+      border: none;
+      border-radius: 22px;
+      padding: 0;
+      width: min(420px, calc(100% - 32px));
+      box-shadow: var(--shadow);
+    }
+
+    dialog::backdrop {
+      background: rgba(15, 23, 42, 0.45);
+    }
+
+    .dialog-content {
+      padding: 18px;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    input, select {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      font: inherit;
+      background: #fff;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 160px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      font: 13px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      resize: vertical;
+    }
+
+    .notice {
+      color: var(--subtext);
+      font-size: 13px;
+      line-height: 1.5;
+      margin: 10px 0 0;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (min-width: 640px) {
+      .grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <h1>24 小時時間紀錄</h1>
+      <p class="subtitle">點選目前正在做的事；切換活動時會自動結束上一項。</p>
+    </header>
+
+    <section class="card current">
+      <div class="label">目前活動</div>
+      <p id="currentActivity" class="current-activity">尚未開始</p>
+      <div id="runningTimer" class="timer">00:00:00</div>
+      <div id="startTime" class="start-time"></div>
+      <div class="button-row">
+        <button id="stopBtn" class="primary">停止目前活動</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">切換活動</h2>
+      <div id="activityGrid" class="grid"></div>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">今日統計</h2>
+      <div id="summary"></div>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">今日詳細紀錄</h2>
+      <div id="records" class="records"></div>
+      <p id="emptyRecords" class="notice">今天還沒有完成的紀錄。正在進行中的活動會在你停止或切換後出現在這裡。</p>
+      <div class="button-row">
+        <button id="exportBtn" class="secondary">匯出 CSV</button>
+        <button id="clearBtn" class="danger">清除全部</button>
+      </div>
+      <p class="notice">資料存在這台裝置的瀏覽器內。換手機、清除網站資料或使用不同瀏覽器時，資料不會自動同步。</p>
+    </section>
+  </main>
+
+  <dialog id="editDialog">
+    <form method="dialog" class="dialog-content">
+      <h2 class="section-title">修改紀錄</h2>
+      <div class="form-grid">
+        <input type="hidden" id="editId" />
+
+        <label>
+          活動
+          <select id="editActivity"></select>
+        </label>
+
+        <label>
+          開始時間
+          <input id="editStart" type="datetime-local" />
+        </label>
+
+        <label>
+          結束時間
+          <input id="editEnd" type="datetime-local" />
+        </label>
+
+        <div class="button-row">
+          <button value="cancel" class="secondary">取消</button>
+          <button id="saveEditBtn" value="default" class="primary">儲存</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="csvDialog">
+    <form method="dialog" class="dialog-content">
+      <h2 class="section-title">CSV 匯出</h2>
+      <textarea id="csvText" readonly></textarea>
+      <div class="button-row">
+        <button id="copyCsvBtn" value="default" class="primary">複製 CSV</button>
+        <button value="cancel" class="secondary">關閉</button>
+      </div>
+      <p class="notice">iPhone 上建議先複製，再貼到備忘錄、Numbers 或 Excel。</p>
+    </form>
+  </dialog>
+
+  <script>
+    const activities = [
+      { id: "sleep", name: "睡覺", emoji: "😴" },
+      { id: "meal", name: "吃飯", emoji: "🍱" },
+      { id: "shower", name: "洗澡", emoji: "🚿" },
+      { id: "exercise", name: "運動", emoji: "🏃" },
+      { id: "study", name: "讀書", emoji: "📚" },
+      { id: "entertainment", name: "娛樂", emoji: "🎮" }
+    ];
+
+    const STORAGE_KEY = "timeTracker.records.v1";
+    const CURRENT_KEY = "timeTracker.current.v1";
+
+    let records = loadJSON(STORAGE_KEY, []);
+    let current = loadJSON(CURRENT_KEY, null);
+    let now = new Date();
+
+    const el = {
+      currentActivity: document.getElementById("currentActivity"),
+      runningTimer: document.getElementById("runningTimer"),
+      startTime: document.getElementById("startTime"),
+      stopBtn: document.getElementById("stopBtn"),
+      activityGrid: document.getElementById("activityGrid"),
+      summary: document.getElementById("summary"),
+      records: document.getElementById("records"),
+      emptyRecords: document.getElementById("emptyRecords"),
+      clearBtn: document.getElementById("clearBtn"),
+      exportBtn: document.getElementById("exportBtn"),
+      editDialog: document.getElementById("editDialog"),
+      editId: document.getElementById("editId"),
+      editActivity: document.getElementById("editActivity"),
+      editStart: document.getElementById("editStart"),
+      editEnd: document.getElementById("editEnd"),
+      saveEditBtn: document.getElementById("saveEditBtn"),
+      csvDialog: document.getElementById("csvDialog"),
+      csvText: document.getElementById("csvText"),
+      copyCsvBtn: document.getElementById("copyCsvBtn")
+    };
+
+    function loadJSON(key, fallback) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch {
+        return fallback;
+      }
+    }
+
+    function save() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+      if (current) {
+        localStorage.setItem(CURRENT_KEY, JSON.stringify(current));
+      } else {
+        localStorage.removeItem(CURRENT_KEY);
+      }
+    }
+
+    function activityById(id) {
+      return activities.find(a => a.id === id);
+    }
+
+    function startActivity(activityId) {
+      const start = new Date();
+
+      if (current && current.activityId === activityId) {
+        return;
+      }
+
+      closeCurrent(start);
+      current = {
+        activityId,
+        start: start.toISOString()
+      };
+      save();
+      render();
+    }
+
+    function stopCurrent() {
+      closeCurrent(new Date());
+      current = null;
+      save();
+      render();
+    }
+
+    function closeCurrent(endDate) {
+      if (!current) return;
+
+      const startDate = new Date(current.start);
+      if (endDate <= startDate) return;
+
+      records.push({
+        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()),
+        activityId: current.activityId,
+        start: startDate.toISOString(),
+        end: endDate.toISOString()
+      });
+    }
+
+    function startOfDay(date) {
+      return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    }
+
+    function endOfDay(date) {
+      const d = startOfDay(date);
+      d.setDate(d.getDate() + 1);
+      return d;
+    }
+
+    function overlapWithToday(start, end, base = now) {
+      const dayStart = startOfDay(base);
+      const dayEnd = endOfDay(base);
+      const s = Math.max(start.getTime(), dayStart.getTime());
+      const e = Math.min(end.getTime(), dayEnd.getTime());
+      return Math.max(0, e - s);
+    }
+
+    function todayDuration(activityId) {
+      let total = 0;
+
+      for (const r of records) {
+        if (r.activityId !== activityId) continue;
+        total += overlapWithToday(new Date(r.start), new Date(r.end));
+      }
+
+      if (current && current.activityId === activityId) {
+        total += overlapWithToday(new Date(current.start), now);
+      }
+
+      return total;
+    }
+
+    function todayRecordsOnly() {
+      return records
+        .filter(r => overlapWithToday(new Date(r.start), new Date(r.end)) > 0)
+        .sort((a, b) => new Date(a.start) - new Date(b.start));
+    }
+
+    function formatClock(ms) {
+      const total = Math.max(0, Math.floor(ms / 1000));
+      const h = Math.floor(total / 3600);
+      const m = Math.floor((total % 3600) / 60);
+      const s = total % 60;
+      return [h, m, s].map(v => String(v).padStart(2, "0")).join(":");
+    }
+
+    function formatShort(ms) {
+      const totalMinutes = Math.max(0, Math.floor(ms / 60000));
+      const h = Math.floor(totalMinutes / 60);
+      const m = totalMinutes % 60;
+      return h === 0 ? `${m} 分` : `${h} 小時 ${m} 分`;
+    }
+
+    function formatTime(date) {
+      return new Intl.DateTimeFormat("zh-Hant", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false
+      }).format(date);
+    }
+
+    function formatDateTime(date) {
+      return new Intl.DateTimeFormat("zh-Hant", {
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false
+      }).format(date);
+    }
+
+    function toDateTimeLocalValue(date) {
+      const pad = n => String(n).padStart(2, "0");
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    }
+
+    function fromDateTimeLocalValue(value) {
+      return new Date(value);
+    }
+
+    function renderActivities() {
+      el.activityGrid.innerHTML = "";
+
+      for (const a of activities) {
+        const button = document.createElement("button");
+        button.className = "activity-button";
+        if (current && current.activityId === a.id) {
+          button.classList.add("active");
+        }
+        button.innerHTML = `
+          <div class="emoji">${a.emoji}</div>
+          <div class="activity-name">${a.name}</div>
+          <div class="activity-time">${formatShort(todayDuration(a.id))}</div>
+        `;
+        button.addEventListener("click", () => startActivity(a.id));
+        el.activityGrid.appendChild(button);
+      }
+    }
+
+    function renderCurrent() {
+      if (!current) {
+        el.currentActivity.textContent = "尚未開始";
+        el.runningTimer.textContent = "00:00:00";
+        el.startTime.textContent = "請選擇你現在正在做的事情";
+        el.stopBtn.disabled = true;
+        el.stopBtn.style.opacity = "0.5";
+        return;
+      }
+
+      const activity = activityById(current.activityId);
+      const start = new Date(current.start);
+      el.currentActivity.textContent = `${activity.emoji} ${activity.name}`;
+      el.runningTimer.textContent = formatClock(now - start);
+      el.startTime.textContent = `開始時間：${formatDateTime(start)}`;
+      el.stopBtn.disabled = false;
+      el.stopBtn.style.opacity = "1";
+    }
+
+    function renderSummary() {
+      const totalTracked = activities.reduce((sum, a) => sum + todayDuration(a.id), 0);
+      const elapsed = now - startOfDay(now);
+      const untracked = Math.max(0, elapsed - totalTracked);
+
+      const rows = activities.map(a => `
+        <div class="summary-row">
+          <div class="summary-left"><span>${a.emoji}</span><span>${a.name}</span></div>
+          <div class="summary-time">${formatShort(todayDuration(a.id))}</div>
+        </div>
+      `).join("");
+
+      el.summary.innerHTML = `
+        ${rows}
+        <div class="summary-row">
+          <div class="summary-left">已記錄</div>
+          <div class="summary-time">${formatShort(totalTracked)}</div>
+        </div>
+        <div class="summary-row muted">
+          <div class="summary-left">今天到目前尚未記錄</div>
+          <div class="summary-time">${formatShort(untracked)}</div>
+        </div>
+      `;
+    }
+
+    function renderRecords() {
+      const todayRecords = todayRecordsOnly();
+      el.records.innerHTML = "";
+      el.emptyRecords.classList.toggle("hidden", todayRecords.length > 0);
+
+      for (const r of todayRecords) {
+        const a = activityById(r.activityId);
+        const start = new Date(r.start);
+        const end = new Date(r.end);
+        const item = document.createElement("div");
+        item.className = "record";
+        item.innerHTML = `
+          <div class="record-main">
+            <div class="record-title">${a.emoji} ${a.name}　${formatShort(end - start)}</div>
+            <div class="record-time">${formatTime(start)} – ${formatTime(end)}</div>
+          </div>
+          <div class="record-actions">
+            <button class="small-btn" data-edit="${r.id}">修改</button>
+            <button class="small-btn small-danger" data-delete="${r.id}">刪除</button>
+          </div>
+        `;
+        el.records.appendChild(item);
+      }
+
+      el.records.querySelectorAll("[data-edit]").forEach(btn => {
+        btn.addEventListener("click", () => openEdit(btn.dataset.edit));
+      });
+
+      el.records.querySelectorAll("[data-delete]").forEach(btn => {
+        btn.addEventListener("click", () => deleteRecord(btn.dataset.delete));
+      });
+    }
+
+    function render() {
+      now = new Date();
+      renderCurrent();
+      renderActivities();
+      renderSummary();
+      renderRecords();
+    }
+
+    function openEdit(id) {
+      const r = records.find(x => x.id === id);
+      if (!r) return;
+
+      el.editId.value = r.id;
+      el.editActivity.value = r.activityId;
+      el.editStart.value = toDateTimeLocalValue(new Date(r.start));
+      el.editEnd.value = toDateTimeLocalValue(new Date(r.end));
+      el.editDialog.showModal();
+    }
+
+    function saveEdit() {
+      const id = el.editId.value;
+      const r = records.find(x => x.id === id);
+      if (!r) return;
+
+      const start = fromDateTimeLocalValue(el.editStart.value);
+      const end = fromDateTimeLocalValue(el.editEnd.value);
+
+      if (!el.editActivity.value || !el.editStart.value || !el.editEnd.value || end <= start) {
+        alert("請確認開始時間與結束時間正確，結束時間要晚於開始時間。");
+        return;
+      }
+
+      r.activityId = el.editActivity.value;
+      r.start = start.toISOString();
+      r.end = end.toISOString();
+
+      save();
+      render();
+      el.editDialog.close();
+    }
+
+    function deleteRecord(id) {
+      if (!confirm("確定要刪除這筆紀錄嗎？")) return;
+      records = records.filter(r => r.id !== id);
+      save();
+      render();
+    }
+
+    function exportCSV() {
+      const header = ["date", "activity", "start", "end", "duration_minutes"];
+      const rows = records
+        .slice()
+        .sort((a, b) => new Date(a.start) - new Date(b.start))
+        .map(r => {
+          const a = activityById(r.activityId);
+          const start = new Date(r.start);
+          const end = new Date(r.end);
+          const date = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, "0")}-${String(start.getDate()).padStart(2, "0")}`;
+          const durationMinutes = Math.round((end - start) / 60000);
+          return [
+            date,
+            a.name,
+            start.toISOString(),
+            end.toISOString(),
+            durationMinutes
+          ];
+        });
+
+      const csv = [header, ...rows]
+        .map(row => row.map(csvCell).join(","))
+        .join("\n");
+
+      el.csvText.value = csv;
+      el.csvDialog.showModal();
+    }
+
+    function csvCell(value) {
+      const s = String(value ?? "");
+      return `"${s.replaceAll('"', '""')}"`;
+    }
+
+    function clearAll() {
+      if (!confirm("確定要清除全部資料嗎？這個動作不能復原。")) return;
+      records = [];
+      current = null;
+      save();
+      render();
+    }
+
+    function init() {
+      for (const a of activities) {
+        const option = document.createElement("option");
+        option.value = a.id;
+        option.textContent = `${a.emoji} ${a.name}`;
+        el.editActivity.appendChild(option);
+      }
+
+      el.stopBtn.addEventListener("click", stopCurrent);
+      el.clearBtn.addEventListener("click", clearAll);
+      el.exportBtn.addEventListener("click", exportCSV);
+      el.saveEditBtn.addEventListener("click", event => {
+        event.preventDefault();
+        saveEdit();
+      });
+      el.copyCsvBtn.addEventListener("click", async event => {
+        event.preventDefault();
+        try {
+          await navigator.clipboard.writeText(el.csvText.value);
+          alert("已複製 CSV");
+        } catch {
+          el.csvText.select();
+          document.execCommand("copy");
+          alert("已嘗試複製 CSV");
+        }
+      });
+
+      render();
+      setInterval(render, 1000);
+
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
