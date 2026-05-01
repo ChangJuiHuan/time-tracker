@@ -1,7 +1,7 @@
 # 24 小時時間紀錄 Web App
 
 這是一個可以放到 iPhone 主畫面的簡單時間紀錄 Web App。
-
+https://changjuihuan.github.io/time-tracker/
 ## 功能
 
 - 睡覺、吃飯、洗澡、運動、讀書、娛樂六種活動
